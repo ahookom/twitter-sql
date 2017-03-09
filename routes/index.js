@@ -16,7 +16,6 @@ module.exports = function makeRouterWithSockets (io) {
     client.query('SELECT * FROM tweets JOIN users ON users.id=tweets.user_id', function (err, result) {
       if (err) return next(err); // pass errors to Express
       var tweets = result.rows;
-      console.log(result.rows);
       res.render('index', { title: 'Twitter.js', tweets: tweets, showForm: true });
     });
   }
@@ -56,9 +55,19 @@ module.exports = function makeRouterWithSockets (io) {
 
   // create a new tweet
   router.post('/tweets', function(req, res, next){
-    var newTweet = tweetBank.add(req.body.name, req.body.text);
-    io.sockets.emit('new_tweet', newTweet);
-    res.redirect('/');
+      client.query('SELECT * FROM users WHERE users.name=$1',[req.body.name], function(err,data){
+        if(err) return next(err);
+        console.log('user check data result is', data.rows);
+        if(data.rows.length){
+          // console.log('user checked out');
+          // console.log('user id is ',data.rows[0].id,' req body is ',req.body);
+          client.query('INSERT INTO tweets (user_id,content) VALUES ($1,$2)',[data.rows[0].id,req.body.text],function(){
+
+          } );
+        io.sockets.emit('new_tweet', {name: req.body.name, body: req.body.text });
+        res.redirect('/');
+        }
+      });
   });
 
   // // replaced this hard-coded route with general static routing in app.js
