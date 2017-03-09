@@ -1,7 +1,7 @@
 'use strict';
 var express = require('express');
 var router = express.Router();
-var tweetBank = require('../db/index');
+var client = require('../db/index');
 
 module.exports = function makeRouterWithSockets (io) {
 
@@ -13,7 +13,7 @@ module.exports = function makeRouterWithSockets (io) {
     //   tweets: allTheTweets,
     //   showForm: true
     // });
-    tweetBank.query('SELECT * FROM tweets JOIN users ON users.id=tweets.user_id', function (err, result) {
+    client.query('SELECT * FROM tweets JOIN users ON users.id=tweets.user_id', function (err, result) {
       if (err) return next(err); // pass errors to Express
       var tweets = result.rows;
       console.log(result.rows);
@@ -27,21 +27,30 @@ module.exports = function makeRouterWithSockets (io) {
 
   // single-user page
   router.get('/users/:username', function(req, res, next){
-    var tweetsForName = tweetBank.find({ name: req.params.username });
+    var tweetsForName = client.query('SELECT * FROM tweets JOIN users ON users.id=tweets.user_id AND users.name = $1', [req.params.username], function(err, data) {
+    //client.query('SELECT * FROM tweets INNER JOIN users ON users.id=tweets.user_id AND users.name = \'Tom Hanks\'', function(err, data) {
+
+      if (err) return next(err);
+    //  console.log('username', req.params.username);
+    //  console.log(typeof req.params.username);
+    //  console.log('data.rows', data.rows);
     res.render('index', {
       title: 'Twitter.js',
-      tweets: tweetsForName,
+      tweets: data.rows,
       showForm: true,
       username: req.params.username
     });
   });
+  });
 
   // single-tweet page
   router.get('/tweets/:id', function(req, res, next){
-    var tweetsWithThatId = tweetBank.find({ id: Number(req.params.id) });
-    res.render('index', {
-      title: 'Twitter.js',
-      tweets: tweetsWithThatId // an array of only one element ;-)
+    client.query('SELECT * FROM tweets JOIN users ON users.id=tweets.user_id AND tweets.id = $1', [req.params.id], function(err, data) {
+        if (err) return next(err);
+        res.render('index', {
+        title: 'Twitter.js',
+        tweets: data.rows
+        });
     });
   });
 
