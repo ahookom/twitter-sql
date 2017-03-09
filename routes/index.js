@@ -1,17 +1,23 @@
 'use strict';
 var express = require('express');
 var router = express.Router();
-var tweetBank = require('../tweetBank');
+var tweetBank = require('../db/index');
 
 module.exports = function makeRouterWithSockets (io) {
 
   // a reusable function
   function respondWithAllTweets (req, res, next){
-    var allTheTweets = tweetBank.list();
-    res.render('index', {
-      title: 'Twitter.js',
-      tweets: allTheTweets,
-      showForm: true
+    // var allTheTweets = tweetBank.list();
+    // res.render('index', {
+    //   title: 'Twitter.js',
+    //   tweets: allTheTweets,
+    //   showForm: true
+    // });
+    tweetBank.query('SELECT * FROM tweets JOIN users ON users.id=tweets.user_id', function (err, result) {
+      if (err) return next(err); // pass errors to Express
+      var tweets = result.rows;
+      console.log(result.rows);
+      res.render('index', { title: 'Twitter.js', tweets: tweets, showForm: true });
     });
   }
 

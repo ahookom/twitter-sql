@@ -20,7 +20,7 @@ app.set('view engine', 'html'); // what file extension do our templates have
 // 1
 
 
-nunjucks.render('foo', {})
+// nunjucks.render('foo', {})
 
 // logging middleware
 app.use(morgan('dev'));
